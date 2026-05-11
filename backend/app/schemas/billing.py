@@ -46,7 +46,36 @@ class PlanResponse(BaseModel):
 class PlanListResponse(BaseModel):
     """Response for listing plans."""
 
-    items: List[PlanResponse]
+    plans: List[PlanResponse]
+    total: int
+
+
+class CreateSubscriptionRequest(BaseModel):
+    """Request to create a subscription."""
+
+    plan_id: UUID
+    billing_cycle: str = "monthly"  # monthly, yearly
+
+
+class RazorpayOrderResponse(BaseModel):
+    """Response for Razorpay order creation."""
+
+    order_id: str
+    amount: int
+    currency: str
+    key_id: str
+    plan_name: str
+    organization_name: str
+    user_email: str
+    user_name: str
+
+
+class VerifyPaymentRequest(BaseModel):
+    """Request to verify payment."""
+
+    order_id: str
+    payment_id: str
+    signature: str
 
 
 class SubscriptionResponse(BaseModel):

@@ -143,3 +143,44 @@ class MessageResponse(BaseModel):
 
     message: str
     success: bool = True
+
+
+class UserListResponse(BaseModel):
+    """Response for listing users."""
+
+    users: list
+    total: int
+    page: int
+    per_page: int
+    pages: int
+
+
+class UserInviteRequest(BaseModel):
+    """Request to invite a new user."""
+
+    email: EmailStr
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = "org_member"
+
+
+class UserUpdateRequest(BaseModel):
+    """Request to update user profile."""
+
+    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
+    avatar_url: Optional[str] = None
+
+
+class UserRoleUpdate(BaseModel):
+    """Request to change user role."""
+
+    role: str  # org_admin, org_member
+
+
+class PasswordChangeRequest(BaseModel):
+    """Request to change password."""
+
+    current_password: str
+    new_password: str = Field(..., min_length=8, max_length=100)

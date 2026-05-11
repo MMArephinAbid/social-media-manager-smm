@@ -205,3 +205,56 @@ def get_org_owner_user():
 def get_super_admin_user():
     """Get super admin user."""
     return Depends(RoleChecker(["super_admin"]))
+
+
+def require_permission(permission: str):
+    """
+    Dependency for checking specific permissions.
+
+    Usage:
+        @router.delete("/item/{id}")
+        async def delete_item(
+            _: bool = Depends(require_permission("items:delete"))
+        ):
+            ...
+    """
+    async def check_permission(
+        current_user: User = Depends(get_current_user)
+    ) -> bool:
+        # For now, check role-based permissions
+        # Can be extended to check granular permissions
+        role_permissions = {
+            "super_admin": ["*"],
+            "org_owner": ["*"],
+            "org_admin": [
+                "users:read", "users:invite", "users:update",
+                "pages:*", "comments:*", "settings:*", "analytics:read",
+            ],
+            "org_member": [
+                "pages:read", "comments:read", "comments:reply",
+                "analytics:read",
+            ],
+        }
+
+        user_permissions = role_permissions.get(current_user.role.value, [])
+
+        # Check for wildcard or specific permission
+        if "*" in user_permissions:
+            return True
+
+        # Check exact match or category wildcard
+        permission_parts = permission.split(":")
+        category = permission_parts[0]
+
+        if f"{category}:*" in user_permissions:
+            return True
+
+        if permission in user_permissions:
+            return True
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permission '{permission}' required"
+        )
+
+    return Depends(check_permission)

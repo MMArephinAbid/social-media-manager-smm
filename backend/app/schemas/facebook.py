@@ -31,6 +31,12 @@ class FacebookAuthURLResponse(BaseModel):
     state: str
 
 
+class FacebookOAuthURLResponse(BaseModel):
+    """Response for Facebook OAuth URL (simplified)."""
+
+    oauth_url: str
+
+
 class FacebookCallbackRequest(BaseModel):
     """Request from Facebook OAuth callback."""
 
@@ -52,11 +58,51 @@ class FacebookPageInfo(BaseModel):
 class ConnectPageRequest(BaseModel):
     """Request to connect a Facebook page."""
 
-    fb_page_id: str
-    access_token: str
+    page_id: str
+    user_access_token: str
     page_name: str
     page_category: Optional[str] = None
     page_picture_url: Optional[str] = None
+
+
+class FacebookPageResponse(BaseModel):
+    """Response schema for a Facebook page."""
+
+    id: UUID
+    page_id: str
+    page_name: str
+    status: str
+    category: Optional[str] = None
+    picture_url: Optional[str] = None
+    followers_count: Optional[int] = None
+    is_webhook_active: bool = True
+    settings: Dict[str, Any] = {}
+    connected_at: Optional[str] = None
+    last_synced_at: Optional[str] = None
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class FacebookPageListResponse(BaseModel):
+    """Response for listing Facebook pages."""
+
+    pages: List["FacebookPageResponse"]
+    total: int
+
+
+class PageStatsResponse(BaseModel):
+    """Statistics for a Facebook page."""
+
+    page_id: str
+    page_name: str
+    period_days: int
+    total_comments: int
+    replied_comments: int
+    pending_comments: int
+    failed_comments: int
+    reply_rate: float
 
 
 class PageResponse(BaseModel):

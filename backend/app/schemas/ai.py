@@ -12,15 +12,14 @@ class AIPromptCreate(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
+    prompt_type: str = "comment_reply"  # comment_reply, greeting, complaint, etc.
     system_prompt: str = Field(..., min_length=10, max_length=5000)
+    user_prompt_template: Optional[str] = None
     tone: str = "professional"
     language: str = "bn"
-    max_words: int = Field(100, ge=10, le=500)
-    include_greeting: bool = True
-    include_signature: bool = False
-    signature_text: Optional[str] = None
-    variables: Optional[Dict[str, str]] = None
-    is_default: bool = False
+    max_length: int = Field(500, ge=50, le=2000)
+    temperature: float = Field(0.7, ge=0, le=2)
+    is_active: bool = True
 
 
 class AIPromptUpdate(BaseModel):
@@ -68,7 +67,7 @@ class AIPromptResponse(BaseModel):
 class AIPromptListResponse(BaseModel):
     """Response for listing AI prompts."""
 
-    items: List[AIPromptResponse]
+    prompts: List[AIPromptResponse]
     total: int
 
 
@@ -99,17 +98,11 @@ class ReplyRuleCreate(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
-    page_id: Optional[UUID] = None  # None = all pages
-    rule_type: str = Field(..., pattern="^(keyword|sentiment|intent|regex)$")
-    keywords: Optional[List[str]] = None
-    match_sentiment: Optional[str] = None
-    match_intent: Optional[str] = None
-    regex_pattern: Optional[str] = None
-    action: str = Field(..., pattern="^(auto_reply|template_reply|skip|flag|escalate)$")
-    reply_template: Optional[str] = None
-    prompt_id: Optional[UUID] = None
-    escalate_to_email: Optional[str] = None
-    escalate_to_webhook: Optional[str] = None
+    condition_type: str = "keyword"  # keyword, sentiment, intent, regex, all
+    condition_value: Optional[str] = None  # keywords, patterns, etc.
+    condition_operator: str = "contains"  # contains, equals, matches, greater_than
+    action_type: str = "auto_reply"  # auto_reply, skip, flag, escalate, template
+    action_value: Optional[str] = None  # template text, webhook URL, etc.
     priority: int = 0
     is_active: bool = True
 
@@ -119,17 +112,11 @@ class ReplyRuleUpdate(BaseModel):
 
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
-    page_id: Optional[UUID] = None
-    rule_type: Optional[str] = None
-    keywords: Optional[List[str]] = None
-    match_sentiment: Optional[str] = None
-    match_intent: Optional[str] = None
-    regex_pattern: Optional[str] = None
-    action: Optional[str] = None
-    reply_template: Optional[str] = None
-    prompt_id: Optional[UUID] = None
-    escalate_to_email: Optional[str] = None
-    escalate_to_webhook: Optional[str] = None
+    condition_type: Optional[str] = None
+    condition_value: Optional[str] = None
+    condition_operator: Optional[str] = None
+    action_type: Optional[str] = None
+    action_value: Optional[str] = None
     priority: Optional[int] = None
     is_active: Optional[bool] = None
 
@@ -140,22 +127,16 @@ class ReplyRuleResponse(BaseModel):
     id: UUID
     name: str
     description: Optional[str] = None
-    page_id: Optional[UUID] = None
-    rule_type: str
-    keywords: Optional[List[str]] = None
-    match_sentiment: Optional[str] = None
-    match_intent: Optional[str] = None
-    regex_pattern: Optional[str] = None
-    action: str
-    reply_template: Optional[str] = None
-    prompt_id: Optional[UUID] = None
-    escalate_to_email: Optional[str] = None
-    escalate_to_webhook: Optional[str] = None
+    condition_type: str
+    condition_value: Optional[str] = None
+    condition_operator: str
+    action_type: str
+    action_value: Optional[str] = None
     priority: int
     is_active: bool
-    times_matched: int
+    times_matched: int = 0
     created_at: str
-    updated_at: str
+    updated_at: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -164,7 +145,7 @@ class ReplyRuleResponse(BaseModel):
 class ReplyRuleListResponse(BaseModel):
     """Response for listing reply rules."""
 
-    items: List[ReplyRuleResponse]
+    rules: List[ReplyRuleResponse]
     total: int
 
 

@@ -103,3 +103,20 @@ class OrganizationListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+
+
+class OrganizationSettingsUpdate(BaseModel):
+    """Request to update organization settings."""
+
+    name: Optional[str] = None
+    settings: Optional[Dict[str, Any]] = None
+
+
+class OrganizationSettingsResponse(BaseModel):
+    """Response for organization settings."""
+
+    id: str
+    name: str
+    slug: str
+    settings: Dict[str, Any]
+    created_at: str

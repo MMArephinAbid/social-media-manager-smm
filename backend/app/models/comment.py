@@ -81,6 +81,19 @@ class Comment(Base, UUIDMixin, TimestampMixin, TenantMixin):
     error_message = Column(Text, nullable=True)
     retry_count = Column(Integer, default=0, nullable=False)
 
+    # Manual Reply Tracking
+    is_manual_reply = Column(Boolean, default=False)
+    replied_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
+    skipped_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
+    skipped_at = Column(String(50), nullable=True)
+
+    # Response Time Tracking
+    response_time_seconds = Column(Integer, nullable=True)
+    ai_tokens_used = Column(Integer, nullable=True)
+
+    # FB Sender ID
+    fb_sender_id = Column(String(100), nullable=True)
+
     # Metadata
     metadata = Column(JSONB, default=dict, nullable=True)
 
