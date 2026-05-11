@@ -1,0 +1,105 @@
+# AIOSOL - Development Docker Compose
+# Created by: Nila (DevOps Engineer)
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: aiosol_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aiosol
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: aiosol_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: aiosol_backend
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/aiosol
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: aiosol_celery_worker
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/aiosol
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    depends_on:
+      - backend
+      - redis
+    volumes:
+      - ../backend:/app
+    command: celery -A app.workers.celery_app worker --loglevel=info
+
+  # Frontend (Development)
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.dev
+    container_name: aiosol_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: aiosol_network
